@@ -1,20 +1,20 @@
-# 🚀 Urban Transportation Intelligence
+# Urban Transportation Analysis
 
-Advanced transportation analytics platform for **Lahore** and **Riyadh** using deep learning, real-time processing, and interactive visualization.
+Transportation analytics platform for **Lahore** and **Riyadh** using deep learning and real-time data processing.
 
 ## 🏙️ Projects
 
-### 🇵🇰 Lahore Smart Traffic Intelligence System
-- Real-time traffic prediction with 90%+ accuracy
-- Route optimization using advanced algorithms
-- Interactive dashboard with Kepler.gl visualization
-- Deep learning models (CNN + LSTM)
+### 🇵🇰 Lahore Traffic Monitoring
+- Traffic prediction at 15/30/60 minute intervals
+- Route optimization using network algorithms
+- Visualization with Kepler.gl
+- CNN + LSTM models
 
-### 🇸🇦 Riyadh Neural Transportation Analytics
-- Graph Neural Networks for multi-modal transportation
+### 🇸🇦 Riyadh Transportation Analysis
+- Graph Neural Networks for multi-modal systems
 - Metro system integration analysis
-- Advanced pattern recognition
-- Next-generation visualization
+- Pattern recognition
+- Data visualization
 
 ## 🛠️ Quick Start
 
