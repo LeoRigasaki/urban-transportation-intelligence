@@ -24,6 +24,47 @@ Research and implementation of transportation analytics for **Lahore** and **Riy
 - Developed a real-time traffic simulation engine using the Kafka streaming protocol.
 - Resolved loss instability through feature scaling and automated temporal imputation.
 
+#### Technical Architecture
+
+```mermaid
+graph TD
+    subgraph "Data Sources"
+        OSM["OpenStreetMap (OSMnx)"]
+        SIM["Traffic Simulator (Python)"]
+    end
+
+    subgraph "Real-time Ingestion (Kafka)"
+        T_PROD["Traffic Producer"]
+        K_BUS["Kafka Topic: lahore_traffic_updates"]
+        T_CONS["Traffic Consumer"]
+        
+        SIM --> T_PROD
+        T_PROD --> K_BUS
+        K_BUS --> T_CONS
+    end
+
+    subgraph "Storage Layer"
+        PG["PostgreSQL + PostGIS"]
+        RD["Redis (Real-time Cache)"]
+        
+        OSM -->|Static Road Network| PG
+        T_CONS -->|Historical Training Data| PG
+        T_CONS -->|Live Traffic State| RD
+    end
+
+    subgraph "Deep Learning Core (Day 3)"
+        DS["Data Scaler & Imputer"]
+        CNN["CNN Layer (Spatial Correlations)"]
+        LSTM["LSTM Layer (Temporal Trends)"]
+        PRED["Traffic Forecast"]
+
+        PG --> DS
+        DS --> CNN
+        CNN --> LSTM
+        LSTM --> PRED
+    end
+```
+
 #### Model Validation and Performance
 
 | Spatial Network Coverage | Temporal Traffic Trends |
@@ -35,6 +76,9 @@ Research and implementation of transportation analytics for **Lahore** and **Riy
 |:---:|:---:|
 | ![Speed Distribution](lahore/data/plots/speed_dist.png) | ![Volume Distribution](lahore/data/plots/volume_dist.png) |
 | *Simulated speed profile (km/h).* | *Vehicle volume density per segment.* |
+
+**Interactive Geospatial Analysis:**
+- **[Interactive Congestion Map](lahore/data/plots/congestion_map.html)**: A Leaflet-based visualization allowing real-time exploration of traffic density and road hierarchy across Lahore. (Requires local HTML viewing).
 
 **Verification Results:**
 - **Training Stability**: MSE loss reduced from 0.057 to 0.050 over initial calibration.
