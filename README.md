@@ -74,10 +74,17 @@ python lahore/src/ml_models/train.py
 **Verification Results**:
 - **Loss Stability**: Successfully reduced MSE loss from **0.057 → 0.050** over 10 epochs.
 - **Data Integrity**: Processed **20,448 nodes** with 2 features (speed, volume) per time step.
-- **Visual Validation**: Generated 4 diagnostic plots in `lahore/data/plots/`:
-  - `road_network.png`: Spatial coverage across Lahore.
-  - `speed_dist.png` & `volume_dist.png`: Statistical distribution of simulated traffic.
-  - `temporal_speed.png`: Temporal variance capturing simulated peaks.
+- **Visual Validation**:
+  
+  <p align="center">
+    <img src="lahore/data/plots/road_network.png" width="400" alt="Road Network">
+    <img src="lahore/data/plots/temporal_speed.png" width="400" alt="Temporal Speed">
+  </p>
+  <p align="center">
+    <img src="lahore/data/plots/speed_dist.png" width="400" alt="Speed Distribution">
+    <img src="lahore/data/plots/volume_dist.png" width="400" alt="Volume Distribution">
+  </p>
+
 - **Model Health**: Forward pass and gradient descent verified.
 
 ---
