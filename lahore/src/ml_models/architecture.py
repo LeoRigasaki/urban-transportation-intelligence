@@ -50,6 +50,21 @@ class TrafficCNNLSTM(nn.Module):
         
         return out
 
+    def predict_with_uncertainty(self, x, num_samples=10):
+        """
+        Performs Monte Carlo Dropout inference to estimate prediction uncertainty.
+        """
+        self.train() # Enable dropout
+        preds = []
+        with torch.no_grad():
+            for _ in range(num_samples):
+                preds.append(self.forward(x).unsqueeze(0))
+        
+        preds = torch.cat(preds, dim=0) # (num_samples, batch, output_dim)
+        mean = preds.mean(dim=0)
+        std = preds.std(dim=0)
+        return mean, std
+
 if __name__ == "__main__":
     # Test with dummy data
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
