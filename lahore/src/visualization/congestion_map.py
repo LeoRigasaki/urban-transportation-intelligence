@@ -55,8 +55,25 @@ def create_congestion_map():
 
     merged_gdf['color'] = merged_gdf.apply(get_color, axis=1)
 
-    # 5. Build Folium Map
-    # Center map on Lahore center
+    # 5. Generate Static PNG Map (Professional standard for README)
+    print("🖼️  Generating static congestion plot...")
+    import matplotlib.pyplot as plt
+    
+    fig, ax = plt.subplots(figsize=(15, 15))
+    # Plot background roads in light gray
+    merged_gdf[merged_gdf['avg_speed'].isna()].plot(ax=ax, color='#e0e0e0', linewidth=0.5, alpha=0.5)
+    # Plot traffic data with colors
+    merged_gdf[merged_gdf['avg_speed'].notna()].plot(ax=ax, color=merged_gdf[merged_gdf['avg_speed'].notna()]['color'], linewidth=2)
+    
+    ax.set_title("Lahore Geospatial Congestion Analysis", fontsize=15)
+    ax.set_axis_off()
+    
+    output_png = "lahore/data/plots/congestion_static.png"
+    plt.savefig(output_png, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Static map saved to {output_png}")
+
+    # 6. Build Folium Map (Optional/Local)
     m = folium.Map(location=[31.5204, 74.3587], zoom_start=12, tiles="cartodbpositron")
     
     # Add road segments to map

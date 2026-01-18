@@ -77,8 +77,13 @@ graph TD
 | ![Speed Distribution](lahore/data/plots/speed_dist.png) | ![Volume Distribution](lahore/data/plots/volume_dist.png) |
 | *Simulated speed profile (km/h).* | *Vehicle volume density per segment.* |
 
-**Interactive Geospatial Analysis:**
-- **[Interactive Congestion Map](lahore/data/plots/congestion_map.html)**: A Leaflet-based visualization allowing real-time exploration of traffic density and road hierarchy across Lahore. (Requires local HTML viewing).
+#### Geospatial Congestion Analysis
+
+<p align="center">
+  <img src="lahore/data/plots/congestion_static.png" width="800" alt="Congestion Map">
+  <br>
+  <i>Static geospatial analysis showing traffic density and road hierarchy across Lahore. Red segments indicate simulated bottlenecks.</i>
+</p>
 
 **Verification Results:**
 - **Training Stability**: MSE loss reduced from 0.057 to 0.050 over initial calibration.
