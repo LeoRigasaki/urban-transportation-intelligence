@@ -22,6 +22,7 @@ streamlit>=1.0.0
 matplotlib>=3.4.0
 seaborn>=0.11.0
 keplergl>=0.3.0
+selenium>=4.0.0
 
 # Web & API
 fastapi>=0.70.0
