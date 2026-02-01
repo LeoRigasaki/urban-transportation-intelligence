@@ -37,7 +37,7 @@ redis>=3.5.0
 
 # Real-time Processing
 kafka-python>=2.0.0
-apache-flink>=1.14.0
+faust-streaming>=0.10.0
 
 # ML Pipeline
 xgboost>=1.5.0

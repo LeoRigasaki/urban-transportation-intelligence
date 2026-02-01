@@ -277,3 +277,51 @@ python lahore/src/analytics/verify_analytics.py
 
 ---
 *Next: Day 7 - Streaming Analytics (Flink/Spark Streaming)*
+
+---
+
+### 📅 Day 7: Streaming Analytics
+
+**Achievements**:
+- Built **Faust-based Stream Processor** with 5-minute tumbling windows for real-time traffic aggregation.
+- Implemented **Sliding Window Feature Extractor** computing rolling statistics (mean, std, congestion index).
+- Created **Online Predictor** module for live ML inference from Kafka streams.
+- Verified end-to-end pipeline: **288 messages → 288 features → 288 predictions** at sub-millisecond latency.
+
+**Commands Executed**:
+```bash
+# Start Docker services
+docker compose up -d
+
+# Run Streaming Verification
+python lahore/src/streaming/verify_streaming.py
+```
+
+**Streaming Architecture**:
+```
+Simulator → [lahore_traffic_updates] → Processor → [lahore_traffic_features] → Predictor → [lahore_traffic_predictions]
+```
+
+**Verification Results**:
+| Stage | Messages | Latency |
+|:---|:---:|:---:|
+| Simulator | 288 | — |
+| Feature Extractor | 288 | <0.01ms |
+| Predictor | 288 | <0.01ms |
+
+**Performance Visualization**:
+<p align="center">
+  <img src="lahore/data/plots/streaming_performance.png" width="800" alt="Streaming Performance">
+  <br>
+  <i>Real-time pipeline performance showing sub-millisecond latency across 288 inference cycles.</i>
+</p>
+
+#### 🖥️ Live Monitoring
+You can watch the system heartbeat in real-time by running the monitor script:
+```bash
+python lahore/src/streaming/live_monitor.py
+```
+
+
+---
+*Next: Day 8 - Advanced ML Pipeline (Online Learning, Drift Detection)*
