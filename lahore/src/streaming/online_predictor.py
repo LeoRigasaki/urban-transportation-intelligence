@@ -10,6 +10,8 @@ import time
 from typing import Dict, List, Any, Optional
 from kafka import KafkaConsumer, KafkaProducer
 from pathlib import Path
+from lahore.src.ml_models.drift_detector import DriftDetector
+from lahore.src.ml_models.ab_tester import ABTestingFramework
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -28,10 +30,16 @@ class OnlinePredictor:
         bootstrap_servers: str = "localhost:9092"
     ):
         self.model_path = Path(model_path)
+        self.shadow_model_path = Path("lahore/models/trained/transformer_shadow.pth")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Load model
-        self.model = self._load_model()
+        # Load models
+        self.model = self._load_model(self.model_path, "Champion")
+        self.shadow_model = self._load_model(self.shadow_model_path, "Challenger")
+        
+        # ML Pipeline Components
+        self.drift_detector = DriftDetector(reference_data=list(np.random.normal(30, 5, 500)))
+        self.ab_tester = ABTestingFramework(metrics_window=100)
         
         # Kafka setup
         self.consumer = KafkaConsumer(
@@ -51,19 +59,19 @@ class OnlinePredictor:
         self.output_topic = output_topic
         logger.info(f"✅ OnlinePredictor initialized on {self.device}")
     
-    def _load_model(self) -> Optional[torch.nn.Module]:
-        """Load the trained Transformer model."""
+    def _load_model(self, path: Path, name: str) -> Optional[torch.nn.Module]:
+        """Load a trained Transformer model."""
         try:
-            if self.model_path.exists():
-                model = torch.load(self.model_path, map_location=self.device)
+            if path.exists():
+                model = torch.load(path, map_location=self.device)
                 model.eval()
-                logger.info(f"✅ Loaded model from {self.model_path}")
+                logger.info(f"✅ Loaded {name} model from {path}")
                 return model
             else:
-                logger.warning(f"⚠️ Model not found at {self.model_path}. Using mock predictor.")
+                logger.warning(f"⚠️ {name} model not found at {path}.")
                 return None
         except Exception as e:
-            logger.error(f"❌ Failed to load model: {e}")
+            logger.error(f"❌ Failed to load {name} model: {e}")
             return None
     
     def _prepare_features(self, feature_dict: Dict[str, Any]) -> np.ndarray:
@@ -87,24 +95,21 @@ class OnlinePredictor:
         """
         start_time = time.time()
         
-        if self.model is not None:
-            # Real model inference
-            try:
-                input_tensor = torch.tensor(
-                    self._prepare_features(features)
-                ).unsqueeze(0).to(self.device)
-                
-                with torch.no_grad():
-                    output = self.model(input_tensor)
-                    predicted_speed = float(output.cpu().numpy()[0])
-            except Exception as e:
-                logger.warning(f"Model inference failed: {e}. Using fallback.")
-                predicted_speed = features.get('avg_speed', 30.0) * 0.95
-        else:
-            # Mock prediction: slight decline from current speed
-            current_speed = features.get('avg_speed', 30.0)
-            congestion = features.get('congestion_index', 0.5)
-            predicted_speed = current_speed * (1 - congestion * 0.1)
+        # 1. Check for data drift
+        current_speed = features.get('avg_speed', 30.0)
+        drift_status = self.drift_detector.check_data_drift([current_speed])
+        
+        # 2. Champion Prediction
+        predicted_speed = self._run_inference(self.model, features)
+        
+        # 3. Challenger Prediction (if exists)
+        shadow_pred = None
+        if self.shadow_model:
+            shadow_pred = self._run_inference(self.shadow_model, features)
+            # In real system, we'd record actual later. Here we mock comparison data.
+            # In a true verifier, we'd wait for the 'ground truth' update to match.
+            self.ab_tester.record_prediction('champion', predicted_speed, current_speed)
+            self.ab_tester.record_prediction('challenger', shadow_pred, current_speed)
         
         latency_ms = (time.time() - start_time) * 1000
         
@@ -112,13 +117,27 @@ class OnlinePredictor:
             'u': features.get('u'),
             'v': features.get('v'),
             'key': features.get('key'),
-            'current_speed': features.get('avg_speed'),
+            'current_speed': current_speed,
             'predicted_speed_15min': round(predicted_speed, 2),
-            'congestion_index': features.get('congestion_index'),
+            'shadow_pred': round(shadow_pred, 2) if shadow_pred else None,
+            'drift_detected': drift_status['drift_detected'],
             'prediction_timestamp': int(time.time()),
             'latency_ms': round(latency_ms, 2),
             'model_type': 'transformer' if self.model else 'mock'
         }
+
+    def _run_inference(self, model: Optional[torch.nn.Module], features: Dict[str, Any]) -> float:
+        """Helper to run model or mock inference."""
+        if model is not None:
+            try:
+                input_tensor = torch.tensor(
+                    self._prepare_features(features)
+                ).unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    return float(model(input_tensor).cpu().numpy()[0])
+            except Exception:
+                return features.get('avg_speed', 30.0) * 0.95
+        return features.get('avg_speed', 30.0) * (1 - features.get('congestion_index', 0.5) * 0.1)
     
     def run(self, max_predictions: Optional[int] = None):
         """
@@ -142,6 +161,9 @@ class OnlinePredictor:
                 if pred_count % 50 == 0:
                     avg_latency = total_latency / pred_count
                     logger.info(f"📊 Predictions: {pred_count}, Avg Latency: {avg_latency:.2f}ms")
+                    
+                    if self.shadow_model:
+                        logger.info(self.ab_tester.get_summary())
                 
                 if max_predictions and pred_count >= max_predictions:
                     break
